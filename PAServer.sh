@@ -17,7 +17,9 @@
 # history
 # 2017/03/22 Find other paserver process is alreay running or not.
 #            実行中の paserver が存在するかどうかを確認する処理を追加
-#           
+# 2020/07/21 use ~/.passerverrc for configuration if exist 
+#            ~/.paserverrc が存在した場合は自動的に設定ファイルとして使用します
+#	        
 
 # 配列の定義
 declare -a list_paserver=()
@@ -25,16 +27,28 @@ declare -a list_paserver=()
 # OS に依存する設定の初期化
 OSTYPE=$( uname );
 case ${OSTYPE} in
-    Darwin)
-    paserver_path_prefix="/Applications"
-    paserver_path_surffix="Contents/MacOS/"
-    ;;
+	Darwin)
+	paserver_path_prefix="/Applications"
+	paserver_path_surffix="Contents/MacOS"
+	paserver_rc="${HOME}/.paserverrc"
+	CURRENT_LOCALE=$(defaults read -g AppleLocale)
+	;;
 
-    Linux)
-    paserver_path_prefix="~/PAServer-*"
-    paserver_path_surffix=""
-    ;;
+	Linux)
+	paserver_path_prefix="~/PAServer-*"
+	paserver_path_surffix=""
+	paserver_rc="${HOME}/.paserverrc"
+	CURRENT_LOCALE=$LANG
+	;;
 esac
+#pwd
+#ls -l ${paserver_rc}
+
+if [ -e "${paserver_rc}" ]; then
+	paserver_option="-config=${paserver_rc}"
+else
+	paserver_option="-scratchdir=~/PAServer/scratch-dir"
+fi
 
 # peco や percol がある場合はフルパスを指定しておく
 # specify peco or percol full path.
@@ -49,7 +63,8 @@ do_main() {
   if [ -e "${interactive_helper}" ]; then
     cmd_paserver=${paserver_path_prefix}/$( cd ${paserver_path_prefix} ; ls -dr PAServer-* | "${interactive_helper}" )/${paserver_path_surffix}/paserver
     if [ -e "${cmd_paserver}" ]; then
-      exec "${cmd_paserver}" -scratchdir=~/PAServer/scratch-dir
+#      echo "${cmd_paserver}" "${paserver_option}"
+      exec "${cmd_paserver}" "${paserver_option}"
     else
       echo "Abort."
       exit 0
@@ -68,7 +83,7 @@ do_main() {
       if [ $? -lt 2 ] && [ 0 -le ${i} ] && [ ${i} -lt ${#list_paserver[@]} ]; then
 
         # 入力値が配列の添え字として有効なら対応するPAServerを実行する
-        cmd_paserver=${paserver_path_prefix}/${list_paserver[${i}]}/${paserver_path_surffix}/paserver -scratchdir=~/PAServer/scratch-dir
+    	cmd_paserver=${paserver_path_prefix}/${list_paserver[${i}]}/${paserver_path_surffix}/paserver "${paserver_option}"
         if [ -e ${cmd_paserver} ]; then
           exec "${cmd_paserver}"
         fi
@@ -82,16 +97,18 @@ do_main() {
 
 # 実行済みのPAServerが存在するかどうかを探す 
 find_other_paserver_processes_is_running()  {
-    pgrep -l paserver
-    if [ $? -eq 0 ]; then
-        echo "abort. another paserver is still running..."
-        exit 1
-    fi
+	pgrep -f -l paserver
+	if [ $? -eq 0 ]; then
+	  case "${CURRENT_LOCALE:0:2}" in
+	    'ja' ) echo "処理を中止します。起動中のPAServerを検出しました。"         ;;
+	    *    ) echo "abort. another paserver is still running..."  ;;
+	  esac
+	  exit 1
+	fi
 }
 
 # peco や percol を使わない場合の対話インタフェース用のメッセージ
 set_language_dependent_message() {
-  local CURRENT_LOCALE=$(defaults read -g AppleLocale)
   case "${CURRENT_LOCALE:0:2}" in
     'ja' ) disp_message="起動したいPAServerを選んでください: "         ;;
     'de' ) disp_message="Bitte wählen Sie PAServer zum Starten: "      ;;

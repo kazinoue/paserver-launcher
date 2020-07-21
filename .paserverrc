@@ -1,0 +1,8 @@
+# if you wish to change paserver listen port, please configure it.
+#port=64211
+
+#if you wish to use another scratch dir, please configure it.
+#scratchdir=~/PAServer/scratch-dir
+
+#if you wish to configure paserver password always, please configure it.
+#password=
