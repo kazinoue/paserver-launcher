@@ -83,9 +83,9 @@ do_main() {
       if [ $? -lt 2 ] && [ 0 -le ${i} ] && [ ${i} -lt ${#list_paserver[@]} ]; then
 
         # 入力値が配列の添え字として有効なら対応するPAServerを実行する
-    	cmd_paserver=${paserver_path_prefix}/${list_paserver[${i}]}/${paserver_path_surffix}/paserver "${paserver_option}"
+    	cmd_paserver=${paserver_path_prefix}/${list_paserver[${i}]}/${paserver_path_surffix}/paserver
         if [ -e ${cmd_paserver} ]; then
-          exec "${cmd_paserver}"
+          exec "${cmd_paserver}" "${paserver_option}"
         fi
       fi
 
@@ -119,7 +119,7 @@ set_language_dependent_message() {
 
 # peco や percol を使わない場合に PAServer を探す処理
 scan_paserver_path() {
-  for dir in $( cd ${paserver_path_prefix} ; ls -d PAServer-* | sort ) ; do
+  for dir in $( cd ${paserver_path_prefix} ; ls -d PAServer-* | sort -r ) ; do
     list_paserver+=( $dir )
   done
 }
