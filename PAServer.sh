@@ -101,6 +101,8 @@ find_other_paserver_processes_is_running()  {
 	if [ $? -eq 0 ]; then
 	  case "${CURRENT_LOCALE:0:2}" in
 	    'ja' ) echo "処理を中止します。起動中のPAServerを検出しました。"         ;;
+	    'de' ) echo "Die Verarbeitung wird gestoppt. Ein laufender PAServer wurde erkannt." ;;
+	    'fr' ) echo "Le traitement sera arrêté. Un PAServer en cours d'exécution a été détecté." ;;
 	    *    ) echo "abort. another paserver is still running..."  ;;
 	  esac
 	  exit 1
